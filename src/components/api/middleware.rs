@@ -42,6 +42,7 @@ where
     forward_ready!(service);
     
     fn call(&self, req: ServiceRequest) -> Self::Future {
+        let fut = self.service.call(req);
         Box::pin(async move {
             if is_authenticated(&req) {
                 let res = self.service.call(req).await?;

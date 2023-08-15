@@ -1,18 +1,25 @@
-mod components;
+extern crate diesel;
+extern crate diesel_migrations;
+extern crate serde_json;
+extern crate r2d2_diesel;
 
-use actix_web::{App, HttpServer};
+mod utils;
+mod db;
+mod services;
 
-
-#[actix_web::main]
+#[actix_rt::main]
 async fn main() -> std::io::Result<()> {
-    components::api::handlers::index();
-    HttpServer::new(|| {
+    use actix_web::{App, HttpServer, web::JsonConfig};
+
+    let conn_pool = db::establish_connection();
+
+    HttpServer::new(move || {
         App::new()
-            .service(index)
-            .service(echo)
-            .route("/hey", web::get().to(manual_hello))
-        })
-        .bind(("127.0.0.1", 8080))?
-        .run()
-        .await
+            .app_data(conn_pool.clone())
+            .app_data(JsonConfig::default().limit(4096))
+            .configure(services::user::init_routes)
+    })
+    .bind(("0.0.0.0", 5000))?
+    .run()
+    .await    
 }
