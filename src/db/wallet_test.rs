@@ -1,4 +1,5 @@
 use crate::db::establish_connection;
+use super::Wallet;
 
 #[test]
 fn create_wallet() {

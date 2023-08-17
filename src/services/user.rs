@@ -1,19 +1,23 @@
 use actix_web::{HttpResponse, web};
 use serde::{Deserialize, Serialize};
 
-use crate::db::{DbPool, models::User};
+use crate::db::{DbPool, models::{User, Wallet}};
 
 #[derive(Serialize, Deserialize)]
 pub struct UserForm {
     pub name: String,
     pub email: String,
     pub password: String,
-    pub wallet_id: String,
 }
 
 pub async fn create_user(user: web::Json<UserForm>, pool: web::Data<DbPool>) -> HttpResponse {
     let conn = &mut pool.get().unwrap();
-    match User::create(conn, user.0.name.clone(), user.0.email.clone(), user.0.password.clone(), user.0.wallet_id.clone()) {
+    let wallet = Wallet::create(conn);
+    if wallet.is_none() {
+        return HttpResponse::InternalServerError().into();
+    }
+
+    match User::create(conn, user.0.name.clone(), user.0.email.clone(), wallet.unwrap().id, user.0.password.clone()) {
         Some(user) => HttpResponse::Ok().json(user),
         None => HttpResponse::InternalServerError().into()
     }

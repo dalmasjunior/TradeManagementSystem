@@ -1,7 +1,15 @@
+
+
+
+use diesel::internal::table_macro::{SelectStatement, FromClause};
+
+use diesel::sql_types::SqlType;
 use uuid::Uuid;
 use serde::{Serialize, Deserialize};
 use diesel::prelude::*;
 
+
+use super::schema::trades::trade_type;
 use super::schema::{*, self};
 use super::schema::trades::dsl::trades as trades_dsl;
 use super::schema::users::dsl::users as users_dsl;
@@ -53,6 +61,74 @@ pub struct Trade {
     pub transaction_fee: f32,
     pub created_at: chrono::NaiveDateTime,
     pub updated_at: chrono::NaiveDateTime,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct DailyProfitLoss {
+    pub date: String,
+    pub profit: f32,
+    pub loss: f32,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct DailyProfitLossByAsset {
+    pub date: String,
+    pub profit: f32,
+    pub loss: f32,
+    pub asset: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct DailyProfitLossByTradeType {
+    pub date: String,
+    pub profit: f32,
+    pub loss: f32,
+    pub trade_type: String,
+}
+
+enum DailyResultType {
+    Asset(Vec<DailyProfitLossByAsset>),
+    TradeType(Vec<DailyProfitLossByTradeType>)
+}
+pub struct Chain;
+pub struct TradeType;
+pub struct Asset;
+
+impl Chain {
+    pub fn is_valid(chain: &str) -> bool {
+        match chain {
+            "Ethereum" => true,
+            "Arbitrum" => true,
+            "Optimism" => true,
+            "Polygon" => true,
+            _ => false,
+        }
+    }    
+}
+
+impl TradeType {
+    pub fn is_valid(trade_type: &str) -> bool {
+        match trade_type {
+            "LimitBuy" => true,
+            "LimitSell" => true,
+            "MarketBuy" => true,
+            "MarketSell" => true,
+            _ => false,
+        }
+    }
+}
+
+impl Asset {
+    pub fn is_valid(asset: &str) -> bool {
+        match asset {
+            "BTC" => true,
+            "ETH" => true,
+            "XRP" => true,
+            "XLM" => true,
+            "DOGE" => true,
+            _ => false,
+        }
+    }
 }
 
 impl Wallet {
@@ -232,6 +308,8 @@ impl User {
 }
 
 impl Trade {
+    
+
     pub fn list(conn: &mut SqliteConnection) -> Vec<Self> {
         trades_dsl
             .order(trades::id.desc())
@@ -249,60 +327,38 @@ impl Trade {
             }
     }
 
-    pub fn create(conn: &mut SqliteConnection, user_id: String, wallet_id: String, amount: f32, chain: String, trade_type: String, asset: String, before_price: f32, execution_price: f32, final_price: f32, traded_amount: f32, execution_fee: f32, transaction_fee: f32) -> Option<Self> {
-        let new_id = Uuid::new_v4().as_hyphenated().to_string();
-
-        if chain.is_empty() || trade_type.is_empty() || asset.is_empty() {
+    pub fn create(conn: &mut SqliteConnection, trade: &mut Trade) -> Option<Self> {
+        trade.id = Uuid::new_v4().as_hyphenated().to_string();
+        
+        if trade.chain.is_empty() || trade.trade_type.is_empty() || trade.asset.is_empty() {
             return None;
         }
 
-        let new_trade = Self::new_trade_struct(new_id, user_id, wallet_id, amount, chain, trade_type, asset, before_price, execution_price, final_price, traded_amount, execution_fee, transaction_fee);
-
         diesel::insert_into(trades_dsl)
-            .values(&new_trade)
+            .values(&*trade)
             .execute(conn)
             .expect("Error saving new trade");
         
-        Self::find_by_id(conn, new_trade.id)
+        Self::find_by_id(conn, trade.id.clone())
     }
 
-    fn new_trade_struct(id: String, user_id: String, wallet_id: String, amount: f32, chain: String, trade_type: String, asset: String, before_price: f32, execution_price: f32, final_price: f32, traded_amount: f32, execution_fee: f32, transaction_fee: f32) -> Self {
-        Self {
-            id: id,
-            user_id: user_id,
-            wallet_id: wallet_id,
-            amount: amount,
-            chain: chain,
-            trade_type: trade_type,
-            asset: asset,
-            before_price: before_price,
-            execution_price: execution_price,
-            final_price: final_price,
-            traded_amount: traded_amount,
-            execution_fee: execution_fee,
-            transaction_fee: transaction_fee,
-            created_at: chrono::Local::now().naive_local(),
-            updated_at: chrono::Local::now().naive_local(),
-        }
-    }
-
-    pub fn update(conn: &mut SqliteConnection, id: String, amount: f32, chain: String, trade_type: String, asset: String, before_price: f32, execution_price: f32, final_price: f32, traded_amount: f32, execution_fee: f32, transaction_fee: f32) -> Option<Self> {
-        if chain.is_empty() || trade_type.is_empty() || asset.is_empty() {
+    pub fn update(conn: &mut SqliteConnection, id: String, trade: &mut Trade) -> Option<Self> {
+        if trade.chain.is_empty() || trade.trade_type.is_empty() || trade.asset.is_empty() {
             return None;
         }
 
         diesel::update(trades_dsl.find(id.clone()))
             .set((
-                schema::trades::amount.eq(amount),
-                schema::trades::chain.eq(chain),
-                schema::trades::trade_type.eq(trade_type),
-                schema::trades::asset.eq(asset),
-                schema::trades::before_price.eq(before_price),
-                schema::trades::execution_price.eq(execution_price),
-                schema::trades::final_price.eq(final_price),
-                schema::trades::traded_amount.eq(traded_amount),
-                schema::trades::execution_fee.eq(execution_fee),
-                schema::trades::transaction_fee.eq(transaction_fee),
+                schema::trades::amount.eq(trade.amount.clone()),
+                schema::trades::chain.eq(trade.chain.clone()),
+                schema::trades::trade_type.eq(trade.trade_type.clone()),
+                schema::trades::asset.eq(trade.asset.clone()),
+                schema::trades::before_price.eq(trade.before_price.clone()),
+                schema::trades::execution_price.eq(trade.execution_price.clone()),
+                schema::trades::final_price.eq(trade.final_price.clone()),
+                schema::trades::traded_amount.eq(trade.traded_amount.clone()),
+                schema::trades::execution_fee.eq(trade.execution_fee.clone()),
+                schema::trades::transaction_fee.eq(trade.transaction_fee.clone()),
                 schema::trades::updated_at.eq(chrono::Local::now().naive_local())))
             .execute(conn)
             .expect("Error updating trade");
@@ -316,6 +372,98 @@ impl Trade {
             .expect("Error deleting trade");
         
         Self::find_by_id(conn, id).is_none()
+    }
+
+    fn get_dates_by_asset(conn: &mut SqliteConnection,start_date: String, end_date: String, user_id: String, asset: String) -> Vec<Self> {
+        trades_dsl
+            .filter(trades::user_id.eq(user_id))
+            .filter(trades::created_at.ge(start_date))
+            .filter(trades::created_at.le(end_date))
+            .filter(trades::asset.eq(asset))
+            .load::<Trade>(conn)
+            .expect("Error loading trades")
+    }
+
+    fn get_dates_by_trade(conn: &mut SqliteConnection, start_date: String, end_date: String, user_id: String, tradetype: String) -> Vec<Self> {
+        trades_dsl
+            .filter(trades::user_id.eq(user_id))
+            .filter(trades::created_at.ge(start_date))
+            .filter(trades::created_at.le(end_date))
+            .filter(trades::trade_type.eq(tradetype))
+            .load::<Trade>(conn)
+            .expect("Error loading trades")
+    }
+
+    fn get_bt_dates(conn: &mut SqliteConnection,start_date: String, end_date: String, user_id: String) -> Vec<Self> {
+        trades_dsl
+            .filter(trades::user_id.eq(user_id))
+            .filter(trades::created_at.ge(start_date))
+            .filter(trades::created_at.le(end_date))
+            .load::<Trade>(conn)
+            .expect("Error loading trades")
+    }
+    
+    pub fn cumulativeFees(conn: &mut SqliteConnection, start_date: String, end_date: String, user_id: String) -> f32 {
+        let trades: Vec<Trade> = Self::get_bt_dates(conn, start_date, end_date, user_id);
+
+        let mut fees = 0.0;
+        for trade in trades.iter() {
+            fees += trade.execution_fee + trade.transaction_fee;
+        }
+        fees
+    }
+
+    pub fn profit_loss(conn: &mut SqliteConnection, start_date: String, end_date: String, user_id: String, asset: Option<String>, tradetype: Option<String>) -> Vec<DailyProfitLoss> {
+        let mut trades: Vec<Trade>;
+        if asset.is_some() {
+            trades = Self::get_dates_by_asset(conn, start_date, end_date, user_id, asset.unwrap());
+        } else if tradetype.is_some() {
+            trades = Self::get_dates_by_trade(conn, start_date, end_date, user_id, tradetype.unwrap());
+        } else {
+            trades = Self::get_bt_dates(conn, start_date, end_date, user_id);
+        }
+        
+        let mut daily_profit_loss: Vec<DailyProfitLoss> = Vec::new();
+        let mut dates: Vec<String> = Vec::new();
+        for trade in trades {
+            if !dates.contains(&trade.created_at.date().to_string()) {
+                dates.push(trade.created_at.date().to_string());
+            }
+        };
+        for date in dates {
+            let mut profit = 0.0;
+            let mut loss = 0.0;
+            for trade in trades.iter() {
+                if trade.created_at.date().to_string() == date {
+                    let pnl = Self::calculate_trade_pnl(trade);
+                    if pnl > 0.0 {
+                        profit += pnl;
+                    } else {
+                        loss += pnl;
+                    }
+                }
+            }
+            daily_profit_loss.push(DailyProfitLoss {
+                date: date,
+                profit: profit,
+                loss: loss,
+            });
+        }
+        daily_profit_loss
+    }
+
+    fn calculate_trade_pnl(trade: &Trade) -> f32{
+        let pnl : f32;
+
+        if trade.trade_type == "LimitBuy" || trade.trade_type == "MarketBuy" {
+           pnl = trade.final_price - trade.execution_price;
+        } else if trade.trade_type == "LimitSell" || trade.trade_type == "MarketSell" {
+            pnl = trade.final_price - trade.before_price;
+        } else {
+            pnl = 0.0;
+        }
+
+        pnl * trade.traded_amount - trade.execution_fee - trade.transaction_fee
     }
 }
 
