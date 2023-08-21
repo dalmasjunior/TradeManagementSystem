@@ -9,6 +9,7 @@ use env_logger;
 mod utils;
 mod db;
 mod services;
+mod middleware;
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {

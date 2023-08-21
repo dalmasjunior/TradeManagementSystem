@@ -1,11 +1,19 @@
 use actix_web::{HttpResponse, web};
 use serde::{Deserialize, Serialize};
 
-use crate::db::{DbPool, models::{User, Wallet}};
+use crate::middleware::jwt_guard::JwtGuard;
+
+use crate::db::{DbPool, models::user::User, models::wallet::Wallet};
 
 #[derive(Serialize, Deserialize)]
 pub struct UserForm {
     pub name: String,
+    pub email: String,
+    pub password: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct LoginForm {
     pub email: String,
     pub password: String,
 }
@@ -41,14 +49,35 @@ pub async fn get(pool: web::Data<DbPool>, user_id: web::Path<String>) -> HttpRes
     }
 }
 
+pub async fn delete(pool: web::Data<DbPool>, user_id: web::Path<String>) -> HttpResponse {
+    let conn = &mut pool.get().unwrap();
+    match User::delete(conn, user_id.into_inner()) {
+        true => HttpResponse::Ok().json("deleted"),
+        false => HttpResponse::InternalServerError().into()
+    }
+}
+
+pub async fn login(pool: web::Data<DbPool>, user: web::Json<LoginForm>) -> HttpResponse {
+    let conn = &mut pool.get().unwrap();
+    match User::login(conn, user.0.email.clone(), user.0.password.clone()) {
+        Some(user) => HttpResponse::Ok().json(user),
+        None => HttpResponse::InternalServerError().into()
+    }
+}
+
 pub fn init_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::resource("/user")
             .route(web::post().to(create_user))
-            .route(web::get().to(index))
+            .route(web::get().to(index).wrap(JwtGuard))
     )
     .service(
         web::resource("/user/{user_id}")
-            .route(web::get().to(get))
+            .route(web::get().to(get)).wrap(JwtGuard)
+            .route(web::delete().to(delete).wrap(JwtGuard))
+    )
+    .service(
+        web::resource("/login")
+            .route(web::post().to(login))
     );
 }

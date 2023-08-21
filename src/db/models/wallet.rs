@@ -1,0 +1,91 @@
+use uuid::Uuid;
+use serde::{Serialize, Deserialize};
+use diesel::prelude::*;
+
+use super::super::schema::wallet;
+use super::super::schema::wallet::dsl::{
+    wallet as wallet_dsl, 
+    balance as balance_dsl,
+    hash as hash_dsl,
+};
+
+use crate::utils::hash::new_hash;
+
+#[derive(Debug, Deserialize, Serialize, Queryable, Insertable)]
+#[diesel(table_name = crate::db::schema::wallet)]
+pub struct Wallet {
+    pub id: String,
+    pub hash: String,
+    pub balance: f32,
+    pub created_at: chrono::NaiveDateTime,
+    pub updated_at: chrono::NaiveDateTime,
+}
+
+impl Wallet {
+    pub fn list(conn: &mut SqliteConnection) -> Vec<Self> {
+        wallet_dsl
+            .order(wallet::id.desc())
+            .load::<Wallet>(conn)
+            .expect("Error loading wallets")
+    }
+    
+    pub fn find_by_id(conn: &mut SqliteConnection, id: String) -> Option<Self> {
+        if let Ok(record) = wallet_dsl
+            .find(id)
+            .get_result::<Wallet>(conn) {
+            Some(record)
+            } else {
+                None
+            }
+    }
+
+    pub fn find_by_hash(conn: &mut SqliteConnection, hash: String) -> Option<Self> {
+        let wallet = wallet_dsl
+            .filter(hash_dsl.eq(hash))
+            .first::<Wallet>(conn)
+            .optional()
+            .expect("Error loading wallet");
+
+        match wallet {
+            Some(wallet) => Some(wallet),
+            None => None,
+        }
+    }
+
+    pub fn create(conn: &mut SqliteConnection) -> Option<Self> {
+        let new_id = Uuid::new_v4().as_hyphenated().to_string();
+        let new_hash = new_hash();
+        let new_wallet = Self::new_wallet_struct(new_id, new_hash.clone(), 0.0);
+
+        diesel::insert_into(wallet_dsl)
+            .values(&new_wallet)
+            .execute(conn)
+            .expect("Error saving new wallet");
+        
+        Self::find_by_hash(conn, new_hash)
+    }
+
+    fn new_wallet_struct(id: String, hash: String, balance: f32) -> Self {
+        Self {
+            id: id,
+            hash: hash,
+            balance: balance,
+            created_at: chrono::Local::now().naive_local(),
+            updated_at: chrono::Local::now().naive_local(),
+        }
+    }
+
+    pub fn update_balance(conn: &mut SqliteConnection, id: String, balance: f32) -> Option<Self> {
+        if let Some(mut _wallet) = Self::find_by_id(conn, id.clone()) {
+            diesel::update(wallet_dsl.find(id.clone()))
+                .set(balance_dsl.eq(balance))
+                .execute(conn)
+                .expect("Error updating wallet");
+            Self::find_by_id(conn, id)
+        } else {
+            None
+        }
+    }
+}
+
+

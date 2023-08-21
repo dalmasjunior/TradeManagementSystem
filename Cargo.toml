@@ -9,14 +9,17 @@ edition = "2021"
 actix-rt = "2.8.0"
 actix-service = "2.0.2"
 actix-web = "4"
+bcrypt = "0.15.0"
 chrono = { version = "0.4.26", features = ["serde"] }
 diesel = { version = "2.1.0", features = ["sqlite", "uuid", "chrono", "r2d2"] }
 diesel-enum = "0.1.0"
 diesel_migrations = "2.1.0"
 dotenv = "0.15.0"
 env_logger = "0.10.0"
+futures = "0.3.28"
 futures-util = "0.3.28"
 hex = "0.4.3"
+jsonwebtoken = "8.3.0"
 r2d2 = "0.8.10"
 r2d2-diesel = "1.0.0"
 secp256k1 = {version = "0.27.0", features = ["rand"] }
