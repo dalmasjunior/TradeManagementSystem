@@ -22,20 +22,23 @@ pub async fn create_user(user: web::Json<UserForm>, pool: web::Data<DbPool>) -> 
     let conn = &mut pool.get().unwrap();
     let wallet = Wallet::create(conn);
     if wallet.is_none() {
-        return HttpResponse::InternalServerError().into();
+        return HttpResponse::InternalServerError().json("Failed to create wallet");
     }
 
-    match User::create(conn, user.0.name.clone(), user.0.email.clone(), wallet.unwrap().id, user.0.password.clone()) {
-        Some(user) => HttpResponse::Ok().json(user),
-        None => HttpResponse::InternalServerError().into()
+    let (user, errors) = User::create(conn, user.0.name.clone(), user.0.email.clone(), wallet.unwrap().id, user.0.password.clone());
+    if errors.is_some() {
+        return HttpResponse::InternalServerError().json(errors.unwrap());
+    } else {
+        return HttpResponse::Ok().json(user);
     }
+    
 }
 
 pub async fn index(pool: web::Data<DbPool>) -> HttpResponse {
     let conn = &mut pool.get().unwrap();
     let users = User::list(conn);
     if users.is_empty() {
-        HttpResponse::InternalServerError().into()
+        HttpResponse::InternalServerError().json("Failed to get users")
     } else {
         HttpResponse::Ok().json(users)
     }
@@ -45,7 +48,7 @@ pub async fn get(pool: web::Data<DbPool>, user_id: web::Path<String>) -> HttpRes
     let conn = &mut pool.get().unwrap();
     match User::find_by_id(conn, user_id.into_inner()) {
         Some(user) => HttpResponse::Ok().json(user),
-        None => HttpResponse::InternalServerError().into()
+        None => HttpResponse::InternalServerError().json("Failed to get user")
     }
 }
 
@@ -53,7 +56,7 @@ pub async fn delete(pool: web::Data<DbPool>, user_id: web::Path<String>) -> Http
     let conn = &mut pool.get().unwrap();
     match User::delete(conn, user_id.into_inner()) {
         true => HttpResponse::Ok().json("deleted"),
-        false => HttpResponse::InternalServerError().into()
+        false => HttpResponse::InternalServerError().json("Failed to delete user")
     }
 }
 
@@ -61,7 +64,7 @@ pub async fn login(pool: web::Data<DbPool>, user: web::Json<LoginForm>) -> HttpR
     let conn = &mut pool.get().unwrap();
     match User::login(conn, user.0.email.clone(), user.0.password.clone()) {
         Some(user) => HttpResponse::Ok().json(user),
-        None => HttpResponse::InternalServerError().into()
+        None => HttpResponse::InternalServerError().json("Failed to login")
     }
 }
 

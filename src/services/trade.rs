@@ -1,10 +1,9 @@
 use actix_web::{web, HttpResponse};
-use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     db::{models::trade::Trade, DbPool},
-    middleware::jwt_guard::JwtGuard,
+    middleware::jwt_guard::JwtGuard, utils,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -75,7 +74,7 @@ fn fill_optional_fields(trade: TradeForm) -> Trade {
         created_at: if trade.timestamp.is_none() {
             chrono::Local::now().naive_local()
         } else {
-            NaiveDateTime::from_timestamp_micros(trade.timestamp.unwrap()).unwrap()
+            utils::date::timestamp_to_naive_date_time(trade.timestamp.unwrap())
         },
         updated_at: chrono::Local::now().naive_local(),
     }
@@ -83,7 +82,7 @@ fn fill_optional_fields(trade: TradeForm) -> Trade {
 
 pub async fn create_trade(trade: web::Json<TradeForm>, pool: web::Data<DbPool>) -> HttpResponse {
     let conn = &mut pool.get().unwrap();
-    println!("aqui");
+    
     let mut trade = fill_optional_fields(trade.0);
     match Trade::create(conn, &mut trade) {
         Some(trade) => HttpResponse::Ok().json(trade),

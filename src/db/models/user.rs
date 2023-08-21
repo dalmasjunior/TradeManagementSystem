@@ -1,3 +1,46 @@
+//! This module contains the definition and implementation of the `User` struct.
+//!
+//! The `User` struct represents a user in the application. It stores information such as
+//! user ID, name, email, password, wallet ID, and timestamps for creation and update.
+//!
+//! The module provides various methods for interacting with user data, including listing users,
+//! finding users by ID or email, creating new users, updating user information, deleting users,
+//! and handling user login.
+//! 
+//! # Examples
+//! 
+//! ```rust
+//! use crate::models::user::User;
+//!
+//! // List all users in the database
+//! let users = User::list(&mut connection);
+//!
+//! // Find a user by ID
+//! if let Some(user) = User::find_by_id(&mut connection, "user_id".to_string()) {
+//!     println!("Found user: {:?}", user);
+//! }
+//!
+//! // Create a new user
+//! if let Some(new_user) = User::create(&mut connection, "John Doe".to_string(), "john@example.com".to_string(), "wallet_id".to_string(), "password123".to_string()) {
+//!     println!("Created new user: {:?}", new_user);
+//! }
+//!
+//! // Update user information
+//! if let Some(updated_user) = User::update(&mut connection, "user_id".to_string(), "New Name".to_string(), "newemail@example.com".to_string(), "new_wallet_id".to_string(), "new_password123".to_string()) {
+//!     println!("Updated user: {:?}", updated_user);
+//! }
+//!
+//! // Delete a user
+//! if User::delete(&mut connection, "user_id".to_string()) {
+//!     println!("User deleted");
+//! }
+//!
+//! // User login
+//! if let Some(jwt_token) = User::login(&mut connection, "john@example.com".to_string(), "password123".to_string()) {
+//!     println!("User logged in. JWT token: {}", jwt_token);
+//! }
+//! ```
+//! 
 use uuid::Uuid;
 use serde::{Serialize, Deserialize};
 use diesel::prelude::*;
@@ -48,24 +91,23 @@ impl User {
             }
     }
 
-    pub fn create(conn: &mut SqliteConnection, name: String, email: String, wallet_id: String, password: String) -> Option<Self> {
+    pub fn create(conn: &mut SqliteConnection, name: String, email: String, wallet_id: String, password: String) -> (Option<Self>, Option<String>) {
         let new_id = Uuid::new_v4().as_hyphenated().to_string();
 
         if email.is_empty() || password.is_empty() || name.is_empty() || wallet_id.is_empty() {
-            return None;
+            return (None, Some("Missing required fields".to_string()));
         }
         
         
         if Self::find_by_email(conn, email.clone()).is_some() {
-            return None;
+            return (None, Some("Email already exists".to_string()));
         }
         
         
         if Wallet::find_by_id(conn, wallet_id.clone()).is_none() {
-            return None;
+            return (None, Some("Wallet does not exist".to_string()));
         }
         
-        //criptograff password
         let hashed_password = bcrypt::hash(password, bcrypt::DEFAULT_COST).unwrap();
 
 
@@ -76,7 +118,7 @@ impl User {
             .execute(conn)
             .expect("Error saving new user");
         
-        Self::find_by_id(conn, new_user.id)
+        (Self::find_by_id(conn, new_user.id), None)
     }
 
     fn new_user_struct(id: String, name: String, email: String, wallet_id: String, password: String) -> Self {

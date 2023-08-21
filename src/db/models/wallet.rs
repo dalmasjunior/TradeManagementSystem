@@ -1,3 +1,43 @@
+//! This module defines a `Wallet` struct and associated methods for managing wallet information.
+//!
+//! The `Wallet` struct represents a wallet in the application, with attributes such as wallet ID, hash, balance,
+//! and timestamps for creation and update.
+//! 
+//! The module provides methods for retrieving wallet data from the database, creating new wallets, and updating wallet balances.
+//! Additionally, it includes utility methods for generating a new wallet hash and creating a new wallet struct.
+//! 
+//! # Examples
+//! 
+//! ```rust
+//! use crate::models::wallet::Wallet;
+//!
+//! // List all wallets in the database
+//! let wallets = Wallet::list(&mut connection);
+//!
+//! // Find a wallet by ID
+//! if let Some(wallet) = Wallet::find_by_id(&mut connection, "wallet_id".to_string()) {
+//!     println!("Found wallet: {:?}", wallet);
+//! }
+//!
+//! // Find a wallet by hash
+//! if let Some(wallet) = Wallet::find_by_hash(&mut connection, "wallet_hash".to_string()) {
+//!     println!("Found wallet: {:?}", wallet);
+//! }
+//!
+//! // Create a new wallet
+//! if let Some(new_wallet) = Wallet::create(&mut connection) {
+//!     println!("Created new wallet: {:?}", new_wallet);
+//! }
+//!
+//! // Update wallet balance
+//! if let Some(updated_wallet) = Wallet::update_balance(&mut connection, "wallet_id".to_string(), 100.0) {
+//!     println!("Updated wallet balance: {:?}", updated_wallet);
+//! }
+//! ```
+//!
+//! # Note
+//! This module assumes the availability of a database connection (`SqliteConnection` in this case) for wallet data retrieval and manipulation.
+
 use uuid::Uuid;
 use serde::{Serialize, Deserialize};
 use diesel::prelude::*;

@@ -1,3 +1,59 @@
+//! This module defines various structs and utility methods related to trading activities and statistics.
+//!
+//! It includes the definition of the `Trade` struct, which represents a trading activity with various attributes such as
+//! trade ID, user ID, wallet ID, trade amount, trade chain, trade type, asset, and timestamps for creation and update.
+//! It also includes definitions of several supporting data structures for representing daily profit/loss, cumulative fees, slippage, etc.
+//! 
+//! The module provides methods for interacting with trade data, calculating various statistics such as profit/loss and slippage,
+//! and validating the integrity of trade attributes like trade chain, trade type, and asset.
+//! 
+//! Additionally, it offers utilities for categorizing trade statistics by various dimensions like asset or trade type,
+//! as well as methods for retrieving and manipulating trade records in the database.
+//! 
+//! # Examples
+//! 
+//! ```rust
+//! use crate::models::trade::{Trade, DailyProfitLoss, CumulativeFeesResponse, SlippageByTrader};
+//!
+//! // List all trades in the database
+//! let trades = Trade::list(&mut connection);
+//!
+//! // Find a trade by ID
+//! if let Some(trade) = Trade::find_by_id(&mut connection, "trade_id".to_string()) {
+//!     println!("Found trade: {:?}", trade);
+//! }
+//!
+//! // Create a new trade
+//! let mut new_trade = Trade::create(&mut connection, &mut Trade { /* trade attributes */ });
+//! if let Some(new_trade) = new_trade {
+//!     println!("Created new trade: {:?}", new_trade);
+//! }
+//!
+//! // Update trade information
+//! if let Some(updated_trade) = Trade::update(&mut connection, "trade_id".to_string(), &mut Trade { /* updated trade attributes */ }) {
+//!     println!("Updated trade: {:?}", updated_trade);
+//! }
+//!
+//! // Delete a trade
+//! if Trade::delete(&mut connection, "trade_id".to_string()) {
+//!     println!("Trade deleted");
+//! }
+//!
+//! // Calculate cumulative fees for a specific date range and user
+//! let cumulative_fees = Trade::cumulative_fees(&mut connection, "start_date".to_string(), "end_date".to_string(), "user_id".to_string());
+//! println!("Cumulative fees: {:?}", cumulative_fees);
+//!
+//! // Calculate daily profit/loss for a specific date range, user, and optionally by asset or trade type
+//! let profit_loss = Trade::profit_loss(&mut connection, "start_date".to_string(), "end_date".to_string(), "user_id".to_string(), Some("asset".to_string()), None);
+//! println!("Daily profit/loss: {:?}", profit_loss);
+//!
+//! // Calculate slippage statistics for a specific date range and user
+//! let slippage_stats = Trade::get_slippage_bt_dates(&mut connection, "start_date".to_string(), "end_date".to_string(), "user_id".to_string());
+//! println!("Slippage statistics: {:?}", slippage_stats);
+//! ```
+//!
+//! # Note
+//! This module assumes the availability of a database connection (`SqliteConnection` in this case) for trade data retrieval and manipulation.
 use uuid::Uuid;
 use serde::{Serialize, Deserialize};
 use diesel::prelude::*;
