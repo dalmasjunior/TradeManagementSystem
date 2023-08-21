@@ -18,8 +18,6 @@ pub struct TradeForm {
     pub execution_price: Option<f32>,
     pub final_price: Option<f32>,
     pub traded_amount: Option<f32>,
-    pub execution_fee: Option<f32>,
-    pub transaction_fee: Option<f32>,
     pub timestamp: Option<i64>,
 }
 
@@ -32,7 +30,7 @@ pub struct TradeQuery {
     pub trade_type: Option<String>,
 }
 
-fn fill_optional_fields(trade: TradeForm) -> Trade {
+pub fn fill_optional_fields(trade: &TradeForm) -> Trade {
     Trade {
         user_id: trade.user_id.clone(),
         wallet_id: trade.wallet_id.clone(),
@@ -60,16 +58,8 @@ fn fill_optional_fields(trade: TradeForm) -> Trade {
         } else {
             trade.traded_amount.unwrap()
         },
-        execution_fee: if trade.execution_fee.is_none() {
-            0.0
-        } else {
-            trade.execution_fee.unwrap()
-        },
-        transaction_fee: if trade.transaction_fee.is_none() {
-            0.0
-        } else {
-            trade.transaction_fee.unwrap()
-        },
+        execution_fee: (trade.execution_price.unwrap_or(0.0) * trade.traded_amount.unwrap_or(0.0)) * 0.003,
+        transaction_fee: trade.execution_price.unwrap_or(0.0) * 0.005,
         id: "".to_string(),
         created_at: if trade.timestamp.is_none() {
             chrono::Local::now().naive_local()
@@ -83,7 +73,7 @@ fn fill_optional_fields(trade: TradeForm) -> Trade {
 pub async fn create_trade(trade: web::Json<TradeForm>, pool: web::Data<DbPool>) -> HttpResponse {
     let conn = &mut pool.get().unwrap();
     
-    let mut trade = fill_optional_fields(trade.0);
+    let mut trade = fill_optional_fields(&trade.0);
     match Trade::create(conn, &mut trade) {
         Some(trade) => HttpResponse::Ok().json(trade),
         None => HttpResponse::InternalServerError().into(),
@@ -114,7 +104,7 @@ pub async fn update(
     trade: web::Json<TradeForm>,
 ) -> HttpResponse {
     let conn = &mut pool.get().unwrap();
-    let mut trade = fill_optional_fields(trade.0);
+    let mut trade = fill_optional_fields(&trade.0);
     match Trade::update(conn, trade_id.into_inner(), &mut trade) {
         Some(trade) => HttpResponse::Ok().json(trade),
         None => HttpResponse::InternalServerError().into(),

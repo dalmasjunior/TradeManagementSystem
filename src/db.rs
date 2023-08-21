@@ -1,5 +1,7 @@
 use std::env;
 
+
+use diesel_migrations::EmbeddedMigrations;
 use dotenv::dotenv;
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::sqlite::SqliteConnection;
@@ -9,7 +11,7 @@ pub mod schema;
 
 pub type DbPool = Pool<ConnectionManager<SqliteConnection>>;
 // pub type SqlitePooledConnection = PooledConnection<ConnectionManager<SqliteConnection>>;
-// pub const MIGRATIONS: diesel_migrations::EmbeddedMigrations = diesel_migrations::embed_migrations!();
+ pub const MIGRATIONS: diesel_migrations::EmbeddedMigrations = diesel_migrations::embed_migrations!("./migrations");
 
 
 
@@ -22,7 +24,10 @@ pub fn establish_connection() -> DbPool {
 
         //to do: run migrations
         
-
+        let mut connection = pool.get().expect("Failed to get a connection from the pool");
+        
+        //to do: fix migration on tests
+        
         pool
     } else {
     

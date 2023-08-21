@@ -214,8 +214,6 @@ impl Trade {
                 schema::trades::execution_price.eq(trade.execution_price.clone()),
                 schema::trades::final_price.eq(trade.final_price.clone()),
                 schema::trades::traded_amount.eq(trade.traded_amount.clone()),
-                schema::trades::execution_fee.eq(trade.execution_fee.clone()),
-                schema::trades::transaction_fee.eq(trade.transaction_fee.clone()),
                 schema::trades::updated_at.eq(chrono::Local::now().naive_local())))
             .execute(conn)
             .expect("Error updating trade");

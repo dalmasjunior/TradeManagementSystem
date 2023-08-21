@@ -1753,6 +1753,7 @@ dependencies = [
  "jsonwebtoken",
  "r2d2",
  "r2d2-diesel",
+ "rand",
  "secp256k1",
  "serde",
  "serde_json",
