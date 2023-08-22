@@ -1,6 +1,28 @@
+//! This module provides database connectivity and setup for Diesel ORM and migrations.
+//!
+//! It includes functions to establish a database connection, handle connection pooling, and perform migrations.
+//! The `establish_connection` function initializes the database connection pool, allowing efficient connection
+//! reuse across multiple threads.
+//!
+//! The module also contains constants for embedded migrations, allowing seamless migration execution.
+//!
+//! # Examples
+//!
+//! ```rust
+//! use crate::db::{DbPool, establish_connection};
+//!
+//! // ... imports ...
+//!
+//! // Initialize the database connection pool.
+//! let pool: DbPool = establish_connection();
+//!
+//! // ... other database operations ...
+//! ```
+//!
+//! # Note
+//! Make sure to configure your environment variables (e.g., `DATABASE_URL`) to ensure proper database connection setup and migration execution.
+
 use std::env;
-
-
 use diesel_migrations::EmbeddedMigrations;
 use dotenv::dotenv;
 use diesel::r2d2::{ConnectionManager, Pool};

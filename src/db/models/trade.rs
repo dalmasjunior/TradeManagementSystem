@@ -54,6 +54,8 @@
 //!
 //! # Note
 //! This module assumes the availability of a database connection (`SqliteConnection` in this case) for trade data retrieval and manipulation.
+
+
 use uuid::Uuid;
 use serde::{Serialize, Deserialize};
 use diesel::prelude::*;

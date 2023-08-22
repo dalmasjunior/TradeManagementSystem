@@ -1,3 +1,18 @@
+//! This module defines the Diesel schema for the database tables used in the application.
+//!
+//! It includes the Diesel table definitions for the `trades`, `users`, and `wallet` tables.
+//! These tables represent different aspects of the application's data, including trade activities,
+//! user information, and wallet details.
+//!
+//! Additionally, this module establishes relationships between tables using the `joinable!` macros,
+//! enabling convenient queries involving multiple tables.
+//!
+//! # Note
+//! This code is generated automatically by the Diesel CLI and reflects the structure of your database.
+//! It provides a convenient way to interact with the database using Diesel's query building and
+//! schema representation.
+
+
 // @generated automatically by Diesel CLI.
 
 diesel::table! {

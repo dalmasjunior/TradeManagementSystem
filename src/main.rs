@@ -29,20 +29,22 @@ mod middleware;
 /// The main function of the application. It sets up the server and starts it.
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
-
+    // Set the logging level and initialize the logger.
     std::env::set_var("RUST_LOG", "debug");
     env_logger::init();
     
+    // Establish a connection pool to the database.
     let conn_pool = db::establish_connection();
 
+    // Start the HTTP server.
     HttpServer::new(move || {
         App::new()
-            .app_data(Data::new(conn_pool.clone()))
-            .app_data(JsonConfig::default().limit(4096))
-            .configure(services::user::init_routes)
-            .configure(services::trade::init_routes)
+            .app_data(Data::new(conn_pool.clone())) // Share the database connection pool across the application.
+            .app_data(JsonConfig::default().limit(4096)) // Configure JSON payload size limit.
+            .configure(services::user::init_routes) // Configure user-related routes.
+            .configure(services::trade::init_routes) // Configure trade-related routes.
     })
-    .bind(("127.0.0.1", 9000))?
+    .bind(("127.0.0.1", 9000))? // Bind the server to a specific address and port.
     .run()
     .await    
 }

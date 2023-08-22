@@ -1,3 +1,36 @@
+//! This module defines utility functions for JSON Web Token (JWT) creation and authentication in Actix Web applications.
+//!
+//! It includes functions to create JWT tokens with custom claims and to authenticate incoming requests based on JWT tokens.
+//!
+//! # Examples
+//!
+//! ```rust
+//! use actix_web::{HttpRequest, Error};
+//!
+//! // ... imports ...
+//!
+//! #[derive(Debug, Serialize, Deserialize)]
+//! struct Claims {
+//!     id: String,
+//!     exp: i64,
+//! }
+//!
+//! // Create a JWT token with custom claims.
+//! pub fn create_jwt(id: String) -> Result<String, jsonwebtoken::errors::Error> {
+//!     // ... implementation details ...
+//! }
+//!
+//! // Authenticate a request using a JWT token.
+//! pub fn authenticate(req: HttpRequest) -> Result<(), Error> {
+//!     // ... implementation details ...
+//! }
+//! ```
+//!
+//! # Note
+//! Ensure that you have the necessary JWT library (e.g., `jsonwebtoken`) and the required secret set in your environment
+//! variables (`JWT_SECRET`) for proper token creation and authentication. Additionally, use the `create_jwt` function to generate
+//! JWT tokens and the `authenticate` function to verify and authenticate incoming requests.
+
 use actix_web::error::ErrorUnauthorized;
 use jsonwebtoken::errors::ErrorKind;
 use jsonwebtoken::{encode, Header, EncodingKey, Validation, Algorithm, decode, DecodingKey};

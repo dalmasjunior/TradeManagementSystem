@@ -1,3 +1,56 @@
+//! This module defines functions and structs related to user management and authentication using the Actix Web framework.
+//!
+//! The provided functions handle user creation, retrieval, deletion, and login. Additionally, they include routes for
+//! registering users, retrieving user information, deleting users, and logging in.
+//!
+//! Key features of this module include:
+//! - `UserForm`: A struct representing the user registration form.
+//! - `LoginForm`: A struct representing the user login form.
+//!
+//! The `init_routes` function configures routes for these user-related operations and wraps certain routes with the `JwtGuard`
+//! middleware to ensure secure authentication.
+//!
+//! # Examples
+//!
+//! ```rust
+//! use actix_web::{HttpResponse, web};
+//! use serde::{Deserialize, Serialize};
+//!
+//! // ... imports ...
+//!
+//! /// Represents a user registration form.
+//! #[derive(Serialize, Deserialize)]
+//! pub struct UserForm {
+//!     // ... fields ...
+//! }
+//!
+//! /// Represents a user login form.
+//! #[derive(Serialize, Deserialize)]
+//! pub struct LoginForm {
+//!     // ... fields ...
+//! }
+//!
+//! // ... other structs ...
+//!
+//! /// Handles the creation of a new user and associated wallet.
+//! pub async fn create_user(user: web::Json<UserForm>, pool: web::Data<DbPool>) -> HttpResponse {
+//!     // ... implementation details ...
+//! }
+//!
+//! // ... other functions ...
+//!
+//! /// Initializes routes for handling user-related HTTP requests.
+//! pub fn init_routes(cfg: &mut web::ServiceConfig) {
+//!     // ... route configuration ...
+//! }
+//! ```
+//!
+//! # Note
+//! This module assumes the availability of a database connection (`SqliteConnection` in this case) for user data retrieval and manipulation.
+//! Additionally, routes that require authentication are wrapped with the `JwtGuard` middleware for secure access.
+//! Ensure that your database schema and models are properly configured to work with the provided methods.
+//! Properly validate and handle user input to prevent security vulnerabilities.
+
 use actix_web::{HttpResponse, web};
 use serde::{Deserialize, Serialize};
 

@@ -1,3 +1,57 @@
+//! This module defines a collection of functions and structs for managing trade-related operations
+//! using the Actix Web framework, along with various utility libraries such as `serde`, `chrono`, and more.
+//!
+//! The provided functions include:
+//!
+//! - `create_trade`: Handles the creation of a new trade entry in the database.
+//! - `index`: Retrieves a list of all trades from the database.
+//! - `get`: Retrieves a specific trade entry by its ID.
+//! - `update`: Updates a specific trade entry with new information.
+//! - `delete`: Deletes a specific trade entry from the database.
+//! - `profit_loss`: Calculates and retrieves profit and loss data for trades within a specified date range.
+//! - `cumulative_fee`: Calculates and retrieves cumulative fee data for trades within a specified date range.
+//! - `slippage`: Retrieves slippage data for trades within a specified date range.
+//! - `init_routes`: Initializes routes for handling trade-related HTTP requests.
+//!
+//! # Examples
+//!
+//! ```
+//! use actix_web::{web, HttpResponse};
+//! use serde::{Deserialize, Serialize};
+//!
+//! // ... imports ...
+//!
+//! /// Represents a form for creating a new trade.
+//! #[derive(Serialize, Deserialize)]
+//! pub struct TradeForm {
+//!     // ... fields ...
+//! }
+//!
+//! // ... other structs ...
+//!
+//! /// Fills in optional fields of a trade form to create a `Trade` object.
+//! fn fill_optional_fields(trade: &TradeForm) -> Trade {
+//!     // ... implementation details ...
+//! }
+//!
+//! /// Handles the creation of a new trade entry in the database.
+//! pub async fn create_trade(trade: web::Json<TradeForm>, pool: web::Data<DbPool>) -> HttpResponse {
+//!     // ... implementation details ...
+//! }
+//!
+//! // ... other functions ...
+//!
+//! /// Initializes routes for handling trade-related HTTP requests.
+//! pub fn init_routes(cfg: &mut web::ServiceConfig) {
+//!     // ... route configuration ...
+//! }
+//! ```
+//!
+//! # Note
+//!
+//! Some of the functions in this module require authentication through JSON Web Tokens (JWT),
+//! and they are wrapped with the `JwtGuard` middleware for secure access.
+
 use actix_web::{web, HttpResponse};
 use serde::{Deserialize, Serialize};
 
