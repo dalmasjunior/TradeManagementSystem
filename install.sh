@@ -37,7 +37,7 @@ fi
 
 # Clone the repository.
 print_success "Cloning the repository..."
-git clone git@github.com:dalmasjunior/TradeManagementSystem.git
+git clone https://github.com/dalmasjunior/TradeManagementSystem.git
 cd TradeManagementSystem
 
 # Build the project.
