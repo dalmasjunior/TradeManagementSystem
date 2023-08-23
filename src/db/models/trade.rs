@@ -83,7 +83,7 @@ pub struct Trade {
     pub updated_at: chrono::NaiveDateTime,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct DailyProfitLoss {
     pub date: String,
     pub profit: f32,
@@ -192,7 +192,7 @@ impl Trade {
         if !Chain::is_valid(&trade.chain) || !TradeType::is_valid(&trade.trade_type) || !Asset::is_valid(&trade.asset) {
             return None;
         }
-        
+                
         diesel::insert_into(trades_dsl)
             .values(&*trade)
             .execute(conn)
@@ -310,7 +310,7 @@ impl Trade {
         daily_profit_loss
     }
 
-    fn calculate_trade_pnl(&self) -> f32{
+    pub fn calculate_trade_pnl(&self) -> f32{
         let pnl : f32;
 
         if self.trade_type == "LimitBuy" || self.trade_type == "MarketBuy" {

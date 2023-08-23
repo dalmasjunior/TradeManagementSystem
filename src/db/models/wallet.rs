@@ -44,6 +44,7 @@ use diesel::prelude::*;
 
 use super::super::schema::wallet;
 use super::super::schema::wallet::dsl::{
+    id as id_dsl,
     wallet as wallet_dsl, 
     balance as balance_dsl,
     hash as hash_dsl,
@@ -70,13 +71,17 @@ impl Wallet {
     }
     
     pub fn find_by_id(conn: &mut SqliteConnection, id: String) -> Option<Self> {
-        if let Ok(record) = wallet_dsl
-            .find(id)
-            .get_result::<Wallet>(conn) {
-            Some(record)
-            } else {
-                None
-            }
+        
+        let wallet = wallet_dsl
+            .filter(id_dsl.eq(id.clone()))
+            .first::<Wallet>(conn)
+            .optional()
+            .expect("Error loading wallet");
+        
+        match wallet {
+            Some(wallet) => Some(wallet),
+            None => None,
+        }
     }
 
     pub fn find_by_hash(conn: &mut SqliteConnection, hash: String) -> Option<Self> {

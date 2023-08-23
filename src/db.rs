@@ -23,7 +23,8 @@
 //! Make sure to configure your environment variables (e.g., `DATABASE_URL`) to ensure proper database connection setup and migration execution.
 
 use std::env;
-//use diesel_migrations::EmbeddedMigrations;
+use std::error::Error;
+use diesel_migrations::MigrationHarness;
 use dotenv::dotenv;
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::sqlite::SqliteConnection;
@@ -32,10 +33,8 @@ pub mod models;
 pub mod schema;
 
 pub type DbPool = Pool<ConnectionManager<SqliteConnection>>;
-// pub type SqlitePooledConnection = PooledConnection<ConnectionManager<SqliteConnection>>;
- //pub const MIGRATIONS: diesel_migrations::EmbeddedMigrations = diesel_migrations::embed_migrations!("./migrations");
 
-
+pub const MIGRATIONS: diesel_migrations::EmbeddedMigrations = diesel_migrations::embed_migrations!("migrations");
 
 pub fn establish_connection() -> DbPool {
     dotenv().ok();
@@ -43,13 +42,9 @@ pub fn establish_connection() -> DbPool {
     if cfg!(test) {
         let manager = ConnectionManager::<SqliteConnection>::new(":memory:");
         let pool = Pool::builder().build(manager).expect("Failed to create DB pool.");
-
-        //to do: run migrations
+        let mut conn = pool.get().expect("Failed to get a connection from the pool");
         
-        //let mut connection = pool.get().expect("Failed to get a connection from the pool");
-        
-        //to do: fix migration on tests
-        
+        run_migrations(&mut conn).expect("Failed to run migrations");
         pool
     } else {
     
@@ -60,3 +55,15 @@ pub fn establish_connection() -> DbPool {
         pool
     }
 }
+
+fn run_migrations(connection: &mut SqliteConnection) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
+
+    // This will run the necessary migrations.
+    //
+    // See the documentation for `MigrationHarness` for
+    // all available methods.
+    connection.run_pending_migrations(MIGRATIONS)?;
+
+    Ok(())
+}
+
