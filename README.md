@@ -74,7 +74,7 @@ This project employs JSON Web Tokens (JWT) for secure authentication and authori
 - **Expired Tokens**: Set appropriate expiration times for tokens and handle token expiration gracefully in your code.
 - **Data Integrity**: Use HTTPS to prevent interception and tampering of JWTs during transmission.
 
-## Comparison with Other Approaches
+### Comparison with Other Approaches
 
 JWT is a widely adopted approach for securing APIs due to its simplicity, scalability, and cross-service compatibility. Compared to traditional session-based authentication, JWTs eliminate the need for server-side storage of session data. Additionally, JWTs can be used effectively in microservices architectures. While there are other authentication methods like OAuth and API keys, JWTs offer a balance between security and ease of implementation.
 
